@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Registro Piso 5</title>
+  <style>
+    :root {
+      --fondo: #f4f5f7;
+      --tarjeta: #ffffff;
+      --texto: #1d2129;
+      --suave: #6b7280;
+      --borde: #d6d9de;
+      --primario: #1f4e8c;
+      --exito: #1e8e3e;
+      --aviso: #b06000;
+      --error: #c5221f;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --fondo: #121417;
+        --tarjeta: #1d2025;
+        --texto: #e8eaed;
+        --suave: #9aa0a6;
+        --borde: #3c4043;
+        --primario: #8ab4f8;
+        --exito: #81c995;
+        --aviso: #fdd663;
+        --error: #f28b82;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      background: var(--fondo);
+      color: var(--texto);
+      display: flex;
+      justify-content: center;
+      padding: 24px 16px;
+    }
+    main { width: 100%; max-width: 420px; }
+    h1 { font-size: 1.1rem; color: var(--suave); font-weight: 600; margin: 0 0 16px; }
+    .pantalla {
+      display: none;
+      background: var(--tarjeta);
+      border: 1px solid var(--borde);
+      border-radius: 14px;
+      padding: 24px 20px;
+    }
+    .pantalla.activa { display: block; }
+    h2 { margin: 0 0 8px; font-size: 1.4rem; }
+    p { margin: 0 0 16px; color: var(--suave); line-height: 1.4; }
+    label { display: block; font-weight: 600; margin: 14px 0 6px; }
+    input, select {
+      width: 100%;
+      padding: 12px;
+      font-size: 1rem;
+      border: 1px solid var(--borde);
+      border-radius: 10px;
+      background: var(--fondo);
+      color: var(--texto);
+    }
+    button {
+      width: 100%;
+      margin-top: 20px;
+      padding: 14px;
+      font-size: 1.05rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 10px;
+      background: var(--primario);
+      color: var(--tarjeta);
+      cursor: pointer;
+    }
+    button:disabled { opacity: 0.5; cursor: wait; }
+    .enlace {
+      background: none;
+      color: var(--primario);
+      font-weight: 500;
+      font-size: 0.95rem;
+      margin-top: 12px;
+      padding: 8px;
+    }
+    .mensaje-error { color: var(--error); margin: 14px 0 0; min-height: 1.2em; }
+    #pantalla-confirmacion { text-align: center; }
+    #pantalla-confirmacion.entrada, #pantalla-confirmacion.salida { border-color: var(--exito); }
+    #pantalla-confirmacion.repetido { border-color: var(--aviso); }
+    .circulo {
+      width: 88px; height: 88px; margin: 8px auto 16px;
+      border-radius: 50%;
+      color: var(--tarjeta);
+      font-size: 3rem; line-height: 88px;
+    }
+    .entrada .circulo, .salida .circulo { background: var(--exito); }
+    .repetido .circulo { background: var(--aviso); }
+    .hora-grande { font-size: 2.6rem; font-weight: 700; margin: 4px 0 8px; color: var(--texto); }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Registro Piso 5</h1>
+
+    <!-- 1. Registrando (lo primero que ve quien ya está dado de alta) -->
+    <section id="pantalla-cargando" class="pantalla activa">
+      <p id="texto-cargando">Registrando…</p>
+    </section>
+
+    <!-- 2. Alta (solo la primera vez) -->
+    <section id="pantalla-alta" class="pantalla">
+      <h2>Regístrate</h2>
+      <p>Solo la primera vez. Te mandaremos un código a tu correo de la institución.</p>
+      <form id="form-alta">
+        <label for="correo">Correo institucional</label>
+        <input id="correo" type="email" placeholder="nombre@u-erre.mx" autocomplete="email" required>
+        <label for="matricula">Matrícula</label>
+        <input id="matricula" inputmode="numeric" required>
+        <label for="nombre">Nombre completo</label>
+        <input id="nombre" autocomplete="name" required>
+        <label for="carrera">Carrera</label>
+        <select id="carrera" required>
+          <option value="">Cargando carreras…</option>
+        </select>
+        <button type="submit">Enviar código</button>
+        <p class="mensaje-error" id="error-alta"></p>
+      </form>
+    </section>
+
+    <!-- 3. Código de verificación -->
+    <section id="pantalla-codigo" class="pantalla">
+      <h2>Revisa tu correo</h2>
+      <p id="texto-codigo">Te enviamos un código de 6 dígitos.</p>
+      <form id="form-codigo">
+        <label for="codigo">Código</label>
+        <input id="codigo" inputmode="numeric" maxlength="6" autocomplete="one-time-code" required>
+        <button type="submit">Verificar</button>
+        <p class="mensaje-error" id="error-codigo"></p>
+      </form>
+      <button class="enlace" id="btn-reenviar" type="button">Reenviar código</button>
+      <button class="enlace" id="btn-corregir" type="button">Corregir mis datos</button>
+    </section>
+
+    <!-- 4. Confirmación (entrada, salida o repetido) -->
+    <section id="pantalla-confirmacion" class="pantalla">
+      <div class="circulo" id="conf-icono">✓</div>
+      <h2 id="conf-titulo"></h2>
+      <p class="hora-grande" id="conf-hora"></p>
+      <p id="conf-nombre"></p>
+      <button class="enlace" id="btn-no-soy" type="button">¿No eres tú?</button>
+    </section>
+
+    <!-- 5. Error general -->
+    <section id="pantalla-error" class="pantalla">
+      <h2>Algo salió mal</h2>
+      <p id="texto-error"></p>
+      <button type="button" onclick="location.reload()">Intentar de nuevo</button>
+    </section>
+  </main>
+
+  <script>
+    // ===== Configuración =====
+    const API_URL = 'https://script.google.com/macros/s/AKfycbzcn66eL01obJT8zzAfv-eKEx0e-vs5BhdXRrHEQ2Gh3veFm_VUc0bYytP1vhJM1hcZ/exec';
+    const CLAVE_TOKEN = 'piso5_token';
+    const PUNTO = new URLSearchParams(location.search).get('punto') || 'sin-punto';
+
+    const TEXTOS = {
+      entrada:  { icono: '✓', titulo: 'Hora de entrada captada' },
+      salida:   { icono: '✓', titulo: 'Hora de salida captada' },
+      repetido: { icono: '!', titulo: 'Tu entrada ya estaba registrada' }
+    };
+
+    // Datos del alta que guardamos en memoria entre "pedir código" y "verificar"
+    let datosAlta = null;
+
+    // ===== Utilidades =====
+    function mostrar(nombre) {
+      document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
+      document.getElementById('pantalla-' + nombre).classList.add('activa');
+    }
+
+    function leerToken() {
+      try { return localStorage.getItem(CLAVE_TOKEN); } catch (e) { return null; }
+    }
+    function guardarToken(token) {
+      try { localStorage.setItem(CLAVE_TOKEN, token); } catch (e) {}
+    }
+    function borrarToken() {
+      try { localStorage.removeItem(CLAVE_TOKEN); } catch (e) {}
+    }
+
+    async function api(datos) {
+      try {
+        const respuesta = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain' },
+          body: JSON.stringify(datos)
+        });
+        return await respuesta.json();
+      } catch (e) {
+        return { ok: false, error: 'No hay conexión. Revisa tu internet e intenta de nuevo.' };
+      }
+    }
+
+    // Desactiva el botón mientras esperamos al servidor (evita el doble toque)
+    async function conEspera(boton, tarea) {
+      boton.disabled = true;
+      const textoOriginal = boton.textContent;
+      boton.textContent = 'Un momento…';
+      try { await tarea(); }
+      finally { boton.disabled = false; boton.textContent = textoOriginal; }
+    }
+
+    function mostrarError(mensaje) {
+      document.getElementById('texto-error').textContent = mensaje;
+      mostrar('error');
+    }
+
+    // ===== Flujo =====
+    async function registrarAhora() {
+      document.getElementById('texto-cargando').textContent = 'Registrando…';
+      mostrar('cargando');
+      const r = await api({ accion: 'registrar', token: leerToken(), punto: PUNTO });
+      if (!r.ok && r.reregistrar) { borrarToken(); return mostrarAlta(); }
+      if (!r.ok) return mostrarError(r.error);
+      mostrarConfirmacion(r);
+    }
+
+    function mostrarConfirmacion(r) {
+      const texto = TEXTOS[r.tipo] || TEXTOS.entrada;
+      const pantalla = document.getElementById('pantalla-confirmacion');
+      pantalla.className = 'pantalla ' + r.tipo;
+      document.getElementById('conf-icono').textContent = texto.icono;
+      document.getElementById('conf-titulo').textContent = texto.titulo;
+      document.getElementById('conf-hora').textContent = r.hora;
+      document.getElementById('conf-nombre').textContent = r.nombre;
+      mostrar('confirmacion');
+    }
+
+    async function mostrarAlta() {
+      mostrar('alta');
+      const select = document.getElementById('carrera');
+      const r = await api({ accion: 'carreras' });
+      if (!r.ok) { document.getElementById('error-alta').textContent = r.error; return; }
+      select.innerHTML = '<option value="">Elige tu carrera</option>';
+      r.carreras.forEach(c => {
+        const opcion = document.createElement('option');
+        opcion.value = c;
+        opcion.textContent = c;
+        select.appendChild(opcion);
+      });
+    }
+
+    function pedirCodigo() {
+      return api({ accion: 'solicitarCodigo', correo: datosAlta.correo });
+    }
+
+    // ===== Eventos =====
+    document.getElementById('form-alta').addEventListener('submit', e => {
+      e.preventDefault();
+      const boton = e.target.querySelector('button');
+      const error = document.getElementById('error-alta');
+      conEspera(boton, async () => {
+        error.textContent = '';
+        datosAlta = {
+          correo: document.getElementById('correo').value.trim().toLowerCase(),
+          matricula: document.getElementById('matricula').value.trim(),
+          nombre: document.getElementById('nombre').value.trim(),
+          carrera: document.getElementById('carrera').value
+        };
+        const r = await pedirCodigo();
+        if (!r.ok) { error.textContent = r.error; return; }
+        document.getElementById('texto-codigo').textContent =
+          'Te enviamos un código de 6 dígitos a ' + datosAlta.correo + '. Si no lo ves, revisa tu correo no deseado.';
+        mostrar('codigo');
+      });
+    });
+
+    document.getElementById('form-codigo').addEventListener('submit', e => {
+      e.preventDefault();
+      const boton = e.target.querySelector('button');
+      const error = document.getElementById('error-codigo');
+      conEspera(boton, async () => {
+        error.textContent = '';
+        const codigo = document.getElementById('codigo').value.trim();
+        const r = await api({ accion: 'verificarCodigo', codigo, ...datosAlta });
+        if (!r.ok) { error.textContent = r.error; return; }
+        guardarToken(r.token);
+        datosAlta = null;
+        await registrarAhora();
+      });
+    });
+
+    document.getElementById('btn-reenviar').addEventListener('click', e => {
+      const error = document.getElementById('error-codigo');
+      conEspera(e.target, async () => {
+        const r = await pedirCodigo();
+        error.textContent = r.ok ? 'Te enviamos un código nuevo.' : r.error;
+      });
+    });
+
+    document.getElementById('btn-corregir').addEventListener('click', () => {
+      document.getElementById('error-codigo').textContent = '';
+      mostrar('alta');
+    });
+
+    document.getElementById('btn-no-soy').addEventListener('click', () => {
+      borrarToken();
+      mostrarAlta();
+    });
+
+    // ===== Inicio: si ya está dado de alta, registra solo =====
+    if (leerToken()) registrarAhora();
+    else mostrarAlta();
+  </script>
+</body>
+</html>
